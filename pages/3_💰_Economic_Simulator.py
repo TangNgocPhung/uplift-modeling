@@ -6,10 +6,11 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from utils.load_models import load_causal_forest, load_test_data, predict_cate, FEAT
+from utils.load_models import (load_causal_forest, load_response_model,
+                                load_test_data, predict_cate, predict_response, FEAT)
 from utils.policy import (optimal_action, ips_policy_value,
                            policy_no_treat, policy_treat_all,
-                           policy_random, policy_uplift_top)
+                           policy_random, policy_uplift_top, policy_response_top)
 from utils.plots import profit_curve_plotly, policy_comparison_bar
 from utils.editorial import (inject_css, render_masthead, render_sidebar_header,
                               render_break_even, sidebar_section_title,
@@ -56,6 +57,17 @@ n = len(test_df)
 T_actual = test_df['actual_T'].values if 'actual_T' in test_df.columns else None
 y_actual = test_df['actual_y'].values if 'actual_y' in test_df.columns else None
 
+# Response scores — ưu tiên cột pre-computed trong test_df, fallback predict_response
+if 'response' in test_df.columns:
+    response_scores = test_df['response'].values
+else:
+    rm = load_response_model()
+    if rm is not None:
+        X_test_full = test_df[FEAT].values.astype(np.float32)
+        response_scores = predict_response(rm, X_test_full)
+    else:
+        response_scores = None
+
 
 # ═════════════════════════════════════════════════════════════
 # PAGE HEADER
@@ -101,15 +113,17 @@ with st.sidebar:
 # ═════════════════════════════════════════════════════════════
 st.markdown('<div class="iq-body">', unsafe_allow_html=True)
 
-# Pre-compute tất cả policies
+# Pre-compute tất cả policies — bao gồm baseline Response Model để head-to-head
 policies_actions = {
     '1. Không gửi ai':        policy_no_treat(n),
     '2. Gửi tất cả Mens':     policy_treat_all(n, 1),
     '3. Gửi tất cả Womens':   policy_treat_all(n, 2),
     '4. Random 30%':          policy_random(n, 0.3),
-    '5. Uplift top 30%':      policy_uplift_top(cate, 0.3),
-    '★ 6. Uplift threshold':  optimal_action(cate, profit_per_conv, cost_per_email),
 }
+if response_scores is not None:
+    policies_actions['5. Response top 30% (predictive)'] = policy_response_top(response_scores, 0.3, treatment=1)
+policies_actions['6. Uplift top 30% (causal)'] = policy_uplift_top(cate, 0.3)
+policies_actions['★ 7. Uplift threshold (causal)'] = optimal_action(cate, profit_per_conv, cost_per_email)
 
 policy_df = None
 if T_actual is not None and y_actual is not None:
@@ -135,8 +149,10 @@ tab1, tab2, tab3 = st.tabs(['So sánh policies', 'Profit-vs-k% curve', 'Sensitiv
 
 # ───────────────── TAB 1 ─────────────────
 with tab1:
-    section('so sánh chính sách', 'Sáu chiến lược phân bổ email',
-            'So sánh policy uplift-driven với baseline naive trên test set qua IPS evaluation.')
+    n_pol = len(policies_actions)
+    section('so sánh chính sách', f'{n_pol} chiến lược phân bổ email',
+            'So sánh policy uplift-driven (causal) với Response model (predictive) '
+            'và các baseline naive — đánh giá bằng IPS estimator trên test set.')
 
     if policy_df is None:
         banner('warning',
@@ -170,16 +186,69 @@ with tab1:
                f'tổng <code>{best["Total profit (VND)"]:,} VND</code> '
                f'với {best["N_treated"]:,} khách được gửi ({best["%_treated"]}).')
 
-        # Compare uplift vs treat-all
-        uplift_pv = policy_df.iloc[5]['Profit/user (VND)']
-        treat_all_pv = max(policy_df.iloc[1]['Profit/user (VND)'],
-                            policy_df.iloc[2]['Profit/user (VND)'])
-        lift_vs_all = uplift_pv - treat_all_pv
+        # Lookup theo tên — robust khi số policies đổi
+        def _pv(name_contains):
+            mask = policy_df['Policy'].str.contains(name_contains, regex=False)
+            return int(policy_df.loc[mask, 'Profit/user (VND)'].iloc[0]) if mask.any() else None
 
+        uplift_thresh_pv = _pv('Uplift threshold')
+        uplift_top_pv = _pv('Uplift top 30%')
+        response_top_pv = _pv('Response top 30%')
+        treat_men_pv = _pv('Gửi tất cả Mens')
+        treat_women_pv = _pv('Gửi tất cả Womens')
+        treat_all_pv = max(treat_men_pv or 0, treat_women_pv or 0)
+
+        lift_vs_all = (uplift_thresh_pv or 0) - treat_all_pv
+
+        # ─── HEADLINE: Uplift vs Response (Causal vs Predictive) ───
+        if response_top_pv is not None and uplift_top_pv is not None:
+            lift_vs_response = uplift_top_pv - response_top_pv
+            lift_pct = (lift_vs_response / abs(response_top_pv) * 100) if response_top_pv else 0
+            verdict = ('Causal ML thắng' if lift_vs_response > 0
+                       else 'Response model thắng' if lift_vs_response < 0
+                       else 'Hoà')
+            verdict_color = '#6B8068' if lift_vs_response > 0 else '#B22234' if lift_vs_response < 0 else '#4A6378'
+
+            st.markdown(f"""
+<div class="iq-rub" style="margin-top:18px">// head-to-head: causal vs predictive (cùng k=30%)</div>
+<div class="iq-lead cols3">
+<div class="iq-ls">
+<div class="v sm">{response_top_pv:,}</div>
+<div class="l">Response top 30% · profit / user</div>
+<div class="s">baseline predictive — "ai sẽ mua"</div>
+</div>
+<div class="iq-ls">
+<div class="v sm red">{uplift_top_pv:,}</div>
+<div class="l">Uplift top 30% · profit / user</div>
+<div class="s">causal — "ai mua NHỜ email"</div>
+</div>
+<div class="iq-ls">
+<div class="v sm" style="color:{verdict_color}">{lift_vs_response:+,}</div>
+<div class="l" style="color:{verdict_color}">{verdict} ({lift_pct:+.1f}%)</div>
+<div class="s">VND/user · giá trị causal modeling</div>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+            if lift_vs_response > 0:
+                banner('success',
+                       f'🎯 <b>Bằng chứng cho thesis</b>: Cùng số lượng email gửi đi (top 30%), '
+                       f'uplift modeling tạo thêm <code>{lift_vs_response:+,} VND/user</code> '
+                       f'so với response model truyền thống — '
+                       f'<b>+{lift_vs_response * 1_000_000:,.0f} VND</b> cho 1 triệu khách.')
+            else:
+                banner('warning',
+                       f'⚠ Trên test set hiện tại, uplift top-30 chưa vượt response top-30. '
+                       f'Hai khả năng: (a) propensity ước lượng sai → IPS biased; '
+                       f'(b) cost/profit hiện tại làm threshold không tách được. '
+                       f'Thử điều chỉnh slider hoặc xem Tab 2 để có bức tranh đầy đủ theo k%.')
+
+        # ─── Uplift vs treat-all (giữ original) ───
         st.markdown(f"""
+<div class="iq-rub" style="margin-top:18px">// uplift vs gửi đại trà</div>
 <div class="iq-lead cols2">
 <div class="iq-ls">
-<div class="v sm">{uplift_pv:,}</div>
+<div class="v sm">{uplift_thresh_pv:,}</div>
 <div class="l">Uplift threshold · profit / user (VND)</div>
 <div class="s">{lift_vs_all:+,} VND vs treat-all</div>
 </div>
@@ -201,7 +270,7 @@ with tab2:
         banner('warning', '⚠ Cần <code>actual_T</code> + <code>actual_y</code> để vẽ curve.')
     else:
         ks = list(range(0, 101, 5))
-        profits_uplift, profits_random = [], []
+        profits_uplift, profits_random, profits_response = [], [], []
         for k_pct in ks:
             a_u = policy_uplift_top(cate, k_pct / 100)
             a_r = policy_random(n, k_pct / 100)
@@ -211,17 +280,38 @@ with tab2:
             profits_random.append(ips_policy_value(
                 a_r, T_actual, y_actual,
                 profit=profit_per_conv, cost=cost_per_email))
+            if response_scores is not None:
+                a_resp = policy_response_top(response_scores, k_pct / 100, treatment=1)
+                profits_response.append(ips_policy_value(
+                    a_resp, T_actual, y_actual,
+                    profit=profit_per_conv, cost=cost_per_email))
 
         k_opt = ks[int(np.argmax(profits_uplift))]
         max_profit = max(profits_uplift)
         lift_vs_all = max_profit - profits_uplift[-1]
+        # Lift uplift vs response tại k tối ưu
+        if response_scores is not None:
+            lift_vs_resp_at_kopt = profits_uplift[ks.index(k_opt)] - profits_response[ks.index(k_opt)]
+        else:
+            lift_vs_resp_at_kopt = None
 
         c1, c2 = st.columns([3, 1])
         with c1:
-            st.plotly_chart(profit_curve_plotly(ks, profits_uplift,
-                                                  profits_random, k_opt),
-                              use_container_width=True)
+            st.plotly_chart(
+                profit_curve_plotly(ks, profits_uplift, profits_random, k_opt,
+                                      profits_response=profits_response if response_scores is not None else None),
+                use_container_width=True)
         with c2:
+            lift_resp_block = ''
+            if lift_vs_resp_at_kopt is not None:
+                lift_color = '#6B8068' if lift_vs_resp_at_kopt > 0 else '#B22234'
+                lift_resp_block = f"""
+<div style="margin-top:14px;border-top:1px solid #C7A270;padding-top:12px">
+<div style="font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;color:{lift_color};text-transform:uppercase;letter-spacing:.1em;font-weight:700">Lift vs Response @ k*</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:18px;color:{lift_color};font-weight:600">{lift_vs_resp_at_kopt:+,.0f} VND</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#8C7B6B;margin-top:2px">causal vs predictive</div>
+</div>
+"""
             st.markdown(f"""
 <div style="border-top:3px solid #1A2A47;padding-top:12px">
 <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#B22234;letter-spacing:.2em;text-transform:uppercase">k* tối ưu</div>
@@ -242,13 +332,26 @@ with tab2:
 <div style="font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;color:#B22234;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Lift vs treat-all</div>
 <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;color:#B22234;font-weight:600">{lift_vs_all:+,.0f} VND</div>
 </div>
+{lift_resp_block}
 </div>
 """, unsafe_allow_html=True)
 
+        insight_extra = ''
+        if response_scores is not None:
+            response_max = max(profits_response)
+            response_kopt = ks[int(np.argmax(profits_response))]
+            insight_extra = (
+                f'<br><br>📈 <b>So sánh với baseline Response model</b>: '
+                f'Response top-k% đạt đỉnh {response_max:,.0f} VND/user tại k={response_kopt}% — '
+                f'thấp hơn uplift {max_profit - response_max:+,.0f} VND/user. '
+                f'Response model gửi cho khách <em>sẵn sàng mua</em> (bao gồm cả Sure Thing — '
+                f'không cần email), trong khi uplift target đúng nhóm Persuadable.'
+            )
         st.markdown(f"""
 <div class="iq-insight">
 💡 <b>Insight</b>: Chỉ cần gửi email cho <b>top {k_opt}%</b> khách hàng theo uplift score
 để đạt lợi nhuận tối đa. Gửi nhiều hơn = tốn cost không tạo thêm conversion (đường cong đi xuống sau k*).
+{insight_extra}
 </div>
 """, unsafe_allow_html=True)
 

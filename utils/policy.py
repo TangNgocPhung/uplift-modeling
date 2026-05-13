@@ -118,6 +118,25 @@ def policy_uplift_top(cate, k_pct):
     return a
 
 
+def policy_response_top(response_scores, k_pct, treatment=1):
+    """
+    Baseline response-model policy: gửi `treatment` cho top k_pct theo response score.
+    Đây là cách marketing truyền thống — "ai sẽ mua" → gửi email.
+    So sánh với policy_uplift_top sẽ cho thấy giá trị của uplift modeling.
+
+    response_scores: (n,) array P(Y=1|X) từ response model.
+    treatment: 1=Mens (default), 2=Womens.
+    """
+    response_scores = np.asarray(response_scores).ravel()
+    n = len(response_scores)
+    n_treat = int(n * k_pct)
+    order = np.argsort(-response_scores)
+    top_idx = order[:n_treat]
+    a = np.zeros(n, dtype=int)
+    a[top_idx] = treatment
+    return a
+
+
 def ips_policy_value(action, T_actual, y_actual,
                       profit=DEFAULT_PROFIT, cost=DEFAULT_COST,
                       propensities=None):

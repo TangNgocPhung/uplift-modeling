@@ -117,15 +117,28 @@ def policy_comparison_bar(policy_df):
     return fig
 
 
-def profit_curve_plotly(ks, profits_uplift, profits_random, k_opt):
-    """Profit-vs-k% curve cho Economic Simulator."""
+def profit_curve_plotly(ks, profits_uplift, profits_random, k_opt,
+                          profits_response=None):
+    """
+    Profit-vs-k% curve cho Economic Simulator.
+
+    profits_response: nếu có thì vẽ thêm đường baseline response-model
+        (gold dashed) → so sánh head-to-head với uplift.
+    """
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=ks, y=profits_uplift, mode='lines+markers',
-        name='Uplift Top-k%',
+        name='Uplift Top-k% (causal)',
         line=dict(color=PAL['red'], width=3),
         marker=dict(size=7, color=PAL['red']),
     ))
+    if profits_response is not None:
+        fig.add_trace(go.Scatter(
+            x=ks, y=profits_response, mode='lines+markers',
+            name='Response Top-k% (predictive)',
+            line=dict(color=PAL['tan'], width=2, dash='dot'),
+            marker=dict(size=6, color=PAL['tan']),
+        ))
     fig.add_trace(go.Scatter(
         x=ks, y=profits_random, mode='lines+markers',
         name='Random k%',
