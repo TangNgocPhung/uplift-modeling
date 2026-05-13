@@ -1,6 +1,6 @@
 # 🎯 Uplift Modeling — Streamlit App
 
-Demo app cho luận văn **"Mô hình hóa Uplift để Tối ưu hóa Chiến dịch Tặng điểm/Khuyến mãi"**.
+Demo app cho tiểu luận **"Mô hình hóa Uplift để Tối ưu hóa Chiến dịch Tặng điểm/Khuyến mãi"**.
 
 ## 📂 Cấu trúc
 
@@ -124,8 +124,8 @@ joblib.dump(cf_final, 'cf_final.pkl', compress=3)
 streamlit run app.py --server.port 8502
 ```
 
-## 📞 Liên hệ
-
-Học viên: ...
-GVHD: ...
-Trường: ...
+## Học viên thực hiện
+Tăng Ngọc Phụng - KHMT836027
+Hoàng Châu Ngọc Phương -  KHMT836028
+Lê Thị Mai Len - KHMT836015
+Giảng viên hướng dẫn: TS. Huỳnh Lê Tấn Tài
