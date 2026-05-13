@@ -34,14 +34,22 @@ st.markdown(
 st.markdown("""
 <style>
 .stApp { background: #F4EFE6; color: #1A2A47; font-family: 'IBM Plex Sans Condensed', sans-serif; }
-#MainMenu, footer, header, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
+/* KHÔNG ẩn `header` (chứa nút toggle sidebar) — chỉ ẩn menu/toolbar/deploy */
+[data-testid="stHeader"] { background: transparent !important; z-index: 999998 !important; }
 
 [data-testid="stSidebar"] { background: #1A2A47 !important; border-right: 4px solid #B22234 !important; }
 [data-testid="stSidebar"] * { color: #F4EFE6 !important; }
 [data-testid="stSidebarNav"], [data-testid="stSidebarNavItems"], [data-testid="stSidebarNavSeparator"], [data-testid="stSidebarNavLinkContainer"] { display: none !important; }
-section[data-testid="stSidebar"] ul { display: none !important; }
-section[data-testid="stSidebar"] [role="navigation"] { display: none !important; }
-section[data-testid="stSidebar"] hr { display: none !important; }
+[data-testid="stSidebarNav"] ul, [data-testid="stSidebarNav"] hr { display: none !important; }
+
+/* Đảm bảo nút toggle sidebar (mở/đóng) luôn click được, không bị mini-masthead che */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapseButton"],
+button[kind="header"] {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+[data-testid="stSidebarCollapsedControl"] svg { color: #1A2A47 !important; fill: #1A2A47 !important; }
 
 .block-container { padding: 0 80px !important; max-width: 100% !important; }
 

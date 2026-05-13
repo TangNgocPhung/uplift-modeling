@@ -1,54 +1,88 @@
 """
-Trang 2 — Upload CSV danh sách khách → batch scoring → download kết quả.
+Trang 2 — Batch Upload (Editorial design v4)
+Upload CSV danh sách khách → batch scoring → download kết quả.
 """
 import streamlit as st
 import pandas as pd
 import numpy as np
 import io
-from utils.load_models import (load_causal_forest, load_response_model,
-                                predict_cate, predict_response, FEAT)
+from utils.load_models import load_causal_forest, predict_cate, FEAT
 from utils.policy import (optimal_action, expected_profit_per_user,
-                           DEFAULT_PROFIT, DEFAULT_COST,
-                           QUADRANT_COLORS)
+                           DEFAULT_PROFIT, DEFAULT_COST)
 from utils.plots import policy_comparison_bar
+from utils.editorial import (inject_css, render_masthead, render_sidebar_header,
+                              render_break_even, sidebar_section_title,
+                              banner, section, error_card)
 
-st.set_page_config(page_title='Batch Upload', page_icon='📊', layout='wide')
+st.set_page_config(
+    page_title='Batch Upload — UpliftIQ',
+    page_icon='▲',
+    layout='wide',
+    initial_sidebar_state='expanded',
+)
 
-st.title('📊 Batch Scoring — Upload CSV danh sách khách hàng')
-st.caption('Upload file CSV → app tự score từng khách → trả CSV với recommendation và lợi nhuận kỳ vọng')
+inject_css()
 
-# === Load model ===
+
+# ═════════════════════════════════════════════════════════════
+# LOAD MODEL
+# ═════════════════════════════════════════════════════════════
 cf_model = load_causal_forest()
 if cf_model is None:
-    st.error('❌ Chưa có file `cf_final.pkl`. Quay lại trang chủ.')
+    render_masthead(2, 'BATCH UPLOAD',
+                    'Batch scoring', 'danh sách khách hàng',
+                    'Upload CSV → app tự score → trả CSV với recommendation')
+    error_card('Chưa có file mô hình',
+               'Vui lòng copy file <code>cf_final.pkl</code> vào thư mục '
+               '<code>./models/</code> rồi reload trang.')
     st.stop()
 
-# === Sidebar ===
+
+# ═════════════════════════════════════════════════════════════
+# PAGE HEADER
+# ═════════════════════════════════════════════════════════════
+render_masthead(2, 'BATCH UPLOAD',
+                'Batch scoring', 'danh sách khách hàng',
+                'Upload CSV → app tự score → trả CSV với recommendation và lợi nhuận kỳ vọng')
+
+
+# ═════════════════════════════════════════════════════════════
+# SIDEBAR
+# ═════════════════════════════════════════════════════════════
 with st.sidebar:
-    st.subheader('⚙️ Tham số kinh tế')
+    render_sidebar_header(active_idx=2)
+
+    sidebar_section_title('⚙ Tham số kinh tế')
     profit_per_conv = st.number_input(
-        'Lợi nhuận/conversion (VND)', value=DEFAULT_PROFIT,
+        'Lợi nhuận / conversion (VND)', value=DEFAULT_PROFIT,
         min_value=10_000, max_value=1_000_000, step=10_000)
     cost_per_email = st.number_input(
-        'Chi phí/email (VND)', value=DEFAULT_COST,
+        'Chi phí / email (VND)', value=DEFAULT_COST,
         min_value=500, max_value=50_000, step=500)
+
     threshold = cost_per_email / profit_per_conv
-    st.metric('Break-even τ', f'{threshold:.4f}')
+    render_break_even(threshold)
 
-# === Required columns ===
-st.subheader('📥 Upload CSV')
 
-with st.expander('📋 Yêu cầu format CSV'):
+# ═════════════════════════════════════════════════════════════
+# BODY — UPLOAD
+# ═════════════════════════════════════════════════════════════
+st.markdown('<div class="iq-body">', unsafe_allow_html=True)
+
+section('import dữ liệu',
+        'Upload file CSV để batch scoring',
+        'File CSV cần có đúng 10 cột features. Tải template bên dưới để có format chuẩn.')
+
+with st.expander('📋 Yêu cầu format CSV', expanded=False):
     st.markdown(f"""
-    File CSV phải có **10 cột features** sau (đúng tên):
+File CSV phải có **10 cột features** sau (đúng tên):
 
-    `{', '.join(FEAT)}`
+`{', '.join(FEAT)}`
 
-    Các cột zip_code và channel là **one-hot** (0/1), tổng mỗi nhóm = 1.
-    File có thể có thêm cột tùy chọn `customer_id` để tracking.
-    """)
+Các cột zip_code và channel là **one-hot** (0/1), tổng mỗi nhóm = 1.
+File có thể có thêm cột tùy chọn `customer_id` để tracking.
+""")
 
-    # Sample template
     sample = pd.DataFrame({
         'customer_id': [1001, 1002, 1003],
         'recency': [1, 5, 10],
@@ -69,27 +103,39 @@ with st.expander('📋 Yêu cầu format CSV'):
 uploaded = st.file_uploader('Chọn file CSV', type=['csv'])
 
 if uploaded is None:
-    st.info('👆 Upload CSV để bắt đầu scoring.')
+    banner('info', '👆 <b>Upload CSV</b> để bắt đầu batch scoring.')
+    st.markdown('<div style="height:18px"></div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-# === Read CSV ===
+
+# ═════════════════════════════════════════════════════════════
+# READ + VALIDATE
+# ═════════════════════════════════════════════════════════════
 try:
     df = pd.read_csv(uploaded)
 except Exception as e:
-    st.error(f'❌ Lỗi đọc file: {e}')
+    banner('error', f'❌ <b>Lỗi đọc file</b>: {e}')
+    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-st.success(f'✅ Đã đọc {len(df):,} dòng từ `{uploaded.name}`')
-st.dataframe(df.head(), use_container_width=True)
+banner('success', f'✓ Đã đọc <b>{len(df):,}</b> dòng từ <code>{uploaded.name}</code>')
 
-# Validate
 missing = [f for f in FEAT if f not in df.columns]
 if missing:
-    st.error(f'❌ Thiếu cột: {missing}')
+    banner('error', f'❌ <b>Thiếu cột bắt buộc</b>: {missing}')
+    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-# === Run prediction ===
-with st.spinner(f'🔮 Đang score {len(df):,} khách hàng...'):
+st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
+st.markdown('<div class="iq-col-title">Xem trước 5 dòng đầu</div>', unsafe_allow_html=True)
+st.dataframe(df.head(), use_container_width=True)
+
+
+# ═════════════════════════════════════════════════════════════
+# RUN PREDICTION
+# ═════════════════════════════════════════════════════════════
+with st.spinner(f'Đang score {len(df):,} khách hàng...'):
     X = df[FEAT].values.astype(np.float32)
     cate = predict_cate(cf_model, X)
 
@@ -107,33 +153,69 @@ with st.spinner(f'🔮 Đang score {len(df):,} khách hàng...'):
         cate, action, profit=profit_per_conv, cost=cost_per_email
     ).round(0).astype(int)
 
-st.success('✅ Đã scoring xong!')
 
-# === Summary metrics ===
-st.markdown('## 📈 Tổng quan kết quả')
-
+# ═════════════════════════════════════════════════════════════
+# SUMMARY METRICS
+# ═════════════════════════════════════════════════════════════
 n = len(df_out)
-n_send_men = (action == 1).sum()
-n_send_women = (action == 2).sum()
-n_no_send = (action == 0).sum()
-total_profit = df_out['expected_profit_VND'].sum()
+n_send_men = int((action == 1).sum())
+n_send_women = int((action == 2).sum())
+n_no_send = int((action == 0).sum())
+total_profit = int(df_out['expected_profit_VND'].sum())
 total_cost = (n_send_men + n_send_women) * cost_per_email
 
-col1, col2, col3, col4 = st.columns(4)
-col1.metric('Tổng khách', f'{n:,}')
-col2.metric('Gửi Mens', f'{n_send_men:,}', f'{n_send_men/n*100:.1f}%')
-col3.metric('Gửi Womens', f'{n_send_women:,}', f'{n_send_women/n*100:.1f}%')
-col4.metric('Không gửi', f'{n_no_send:,}', f'{n_no_send/n*100:.1f}%')
+st.markdown('<div style="height:24px"></div>', unsafe_allow_html=True)
+section('tổng quan kết quả', 'Phân bổ recommendation')
 
-st.markdown('---')
+st.markdown(f"""
+<div class="iq-lead">
+<div class="iq-ls">
+<div class="v">{n:,}</div>
+<div class="l">Tổng khách hàng</div>
+<div class="s">đã scoring</div>
+</div>
+<div class="iq-ls">
+<div class="v red">{n_send_men:,}</div>
+<div class="l">Gửi Mens E-mail</div>
+<div class="s">{n_send_men/n*100:.1f}% danh sách</div>
+</div>
+<div class="iq-ls">
+<div class="v sage">{n_send_women:,}</div>
+<div class="l">Gửi Womens E-mail</div>
+<div class="s">{n_send_women/n*100:.1f}% danh sách</div>
+</div>
+<div class="iq-ls">
+<div class="v tan">{n_no_send:,}</div>
+<div class="l">Không gửi</div>
+<div class="s">{n_no_send/n*100:.1f}% danh sách</div>
+</div>
+</div>
 
-col1, col2, col3 = st.columns(3)
-col1.metric('💰 Lợi nhuận tổng', f'{total_profit:,.0f} VND')
-col2.metric('📤 Chi phí gửi tổng', f'{total_cost:,.0f} VND')
-col3.metric('💵 Lợi nhuận trung bình/user', f'{total_profit/n:,.0f} VND')
+<div class="iq-lead cols3">
+<div class="iq-ls">
+<div class="v sage sm">{total_profit:,.0f}</div>
+<div class="l">Lợi nhuận tổng (VND)</div>
+<div class="s">expected profit</div>
+</div>
+<div class="iq-ls">
+<div class="v sm">{total_cost:,.0f}</div>
+<div class="l">Chi phí gửi tổng (VND)</div>
+<div class="s">{n_send_men + n_send_women:,} email</div>
+</div>
+<div class="iq-ls">
+<div class="v sm">{total_profit/n:,.0f}</div>
+<div class="l">Lợi nhuận trung bình / user</div>
+<div class="s">VND / khách</div>
+</div>
+</div>
+""", unsafe_allow_html=True)
 
-# === Compare với baseline ===
-st.markdown('## 🔁 So sánh với các chính sách khác')
+
+# ═════════════════════════════════════════════════════════════
+# POLICY COMPARISON
+# ═════════════════════════════════════════════════════════════
+section('so sánh chính sách', 'Uplift Optimal vs Baseline',
+        'So sánh chính sách uplift-driven với các baseline naive (gửi tất cả, không gửi ai).')
 
 action_treat_all_men = np.ones(n, dtype=int)
 action_treat_all_women = np.full(n, 2, dtype=int)
@@ -147,66 +229,91 @@ profit_women_all = expected_profit_per_user(cate, action_treat_all_women,
                                               profit=profit_per_conv, cost=cost_per_email).sum()
 profit_uplift = total_profit
 
+policy_rows = [
+    ('Không gửi ai',       profit_no,        False),
+    ('Gửi tất cả Mens',    profit_men_all,   False),
+    ('Gửi tất cả Womens',  profit_women_all, False),
+    ('★ Uplift Optimal',   profit_uplift,    True),
+]
+
+table_html = '<table class="iq-dt">'
+table_html += '<tr><th>Policy</th><th style="text-align:right">Profit / user (VND)</th><th style="text-align:right">Total profit (VND)</th></tr>'
+for name, total, is_best in policy_rows:
+    cls = 'highlight' if is_best else ''
+    table_html += (f'<tr class="{cls}"><td>{name}</td>'
+                   f'<td class="num">{total/n:,.0f}</td>'
+                   f'<td class="num">{total:,.0f}</td></tr>')
+table_html += '</table>'
+st.markdown(table_html, unsafe_allow_html=True)
+
 policy_df = pd.DataFrame({
-    'Policy': ['Không gửi ai', 'Gửi tất cả Mens', 'Gửi tất cả Womens',
-                '⭐ Uplift Optimal'],
-    'Profit/user (VND)': [
-        round(profit_no / n),
-        round(profit_men_all / n),
-        round(profit_women_all / n),
-        round(profit_uplift / n),
-    ],
-    'Total profit (VND)': [
-        round(profit_no), round(profit_men_all),
-        round(profit_women_all), round(profit_uplift),
-    ],
+    'Policy': [r[0] for r in policy_rows],
+    'Profit/user (VND)': [round(r[1]/n) for r in policy_rows],
+    'Total profit (VND)': [round(r[1]) for r in policy_rows],
 })
-st.dataframe(policy_df, use_container_width=True, hide_index=True)
 st.plotly_chart(policy_comparison_bar(policy_df), use_container_width=True)
 
 uplift_advantage = profit_uplift - max(profit_men_all, profit_women_all, profit_no)
 if uplift_advantage > 0:
-    st.success(f'🎉 **Uplift Optimal vượt baseline tốt nhất: +{uplift_advantage:,.0f} VND**')
+    banner('success',
+           f'🎉 <b>Uplift Optimal vượt baseline tốt nhất</b>: '
+           f'+{uplift_advantage:,.0f} VND tổng / +{uplift_advantage/n:,.0f} VND mỗi user.')
 else:
-    st.warning(f'⚠️ Uplift Optimal hiện không vượt baseline. '
-                f'Có thể tăng cost giả định để có lift rõ hơn.')
+    banner('warning',
+           '⚠ Uplift Optimal hiện không vượt baseline. '
+           'Có thể tăng <code>cost/email</code> để thấy lợi thế rõ hơn.')
 
-# === Download ===
-st.markdown('## 💾 Download kết quả')
+
+# ═════════════════════════════════════════════════════════════
+# DOWNLOAD
+# ═════════════════════════════════════════════════════════════
+st.markdown('<div style="height:24px"></div>', unsafe_allow_html=True)
+section('download kết quả', 'Xuất file đã scoring')
 
 csv_out = df_out.to_csv(index=False).encode('utf-8')
-st.download_button(
-    '📥 **Download CSV với recommendation**',
-    csv_out, f'scored_{uploaded.name}', 'text/csv',
-    type='primary', use_container_width=True,
-)
-
-# Excel option
-try:
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df_out.to_excel(writer, sheet_name='Scored Customers', index=False)
-        policy_df.to_excel(writer, sheet_name='Policy Comparison', index=False)
-    excel_bytes = output.getvalue()
+c1, c2 = st.columns(2)
+with c1:
     st.download_button(
-        '📊 Download Excel (.xlsx)',
-        excel_bytes, f'scored_{uploaded.name.replace(".csv", ".xlsx")}',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '▼  CSV với recommendation',
+        csv_out, f'scored_{uploaded.name}', 'text/csv',
+        use_container_width=True,
     )
-except ImportError:
-    st.caption('Cài `openpyxl` để có option Excel: `pip install openpyxl`')
+with c2:
+    try:
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df_out.to_excel(writer, sheet_name='Scored Customers', index=False)
+            policy_df.to_excel(writer, sheet_name='Policy Comparison', index=False)
+        excel_bytes = output.getvalue()
+        st.download_button(
+            '▼  Excel (.xlsx)',
+            excel_bytes, f'scored_{uploaded.name.replace(".csv", ".xlsx")}',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            use_container_width=True,
+        )
+    except ImportError:
+        st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#8C7B6B;padding-top:8px">Cài <code>openpyxl</code> để có option Excel.</div>',
+                    unsafe_allow_html=True)
 
-# Preview table
-st.markdown('### 📋 Preview kết quả (200 dòng đầu)')
+
+# ═════════════════════════════════════════════════════════════
+# PREVIEW
+# ═════════════════════════════════════════════════════════════
+st.markdown('<div style="height:24px"></div>', unsafe_allow_html=True)
+section('preview kết quả', 'Xem trước 200 dòng đầu')
+
 
 def color_action(val):
-    if val == 'Gửi Mens E-Mail':     return 'background-color: #D1FAE5'
-    if val == 'Gửi Womens E-Mail':   return 'background-color: #FEF3C7'
-    if val == 'Không gửi':            return 'background-color: #F3F4F6'
+    if val == 'Gửi Mens E-Mail':    return 'background-color: #FBF8F2; color: #B22234; font-weight: 600'
+    if val == 'Gửi Womens E-Mail':  return 'background-color: #FBF8F2; color: #6B8068; font-weight: 600'
+    if val == 'Không gửi':           return 'background-color: #ECE5D7; color: #4A6378'
     return ''
+
 
 preview = df_out.head(200)
 st.dataframe(
     preview.style.map(color_action, subset=['recommended_action']),
-    use_container_width=True, height=400,
+    use_container_width=True, height=420,
 )
+
+st.markdown('</div>', unsafe_allow_html=True)

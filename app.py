@@ -372,6 +372,7 @@ with st.sidebar:
 <a class="iq-nav-link" href="/Batch_Upload" target="_self">02 · BATCH UPLOAD</a>
 <a class="iq-nav-link" href="/Economic_Simulator" target="_self">03 · ECONOMIC SIM</a>
 <a class="iq-nav-link" href="/Persona_Explorer" target="_self">04 · PERSONA EXPLORER</a>
+<a class="iq-nav-link" href="/Gioi_Thieu_Do_An" target="_self">05 · GIỚI THIỆU ĐỒ ÁN</a>
 </div>
 <div style="border-top:1px solid #2C3E5C;margin-top:18px;padding-top:14px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;line-height:2">
 <div style="color:#B22234;font-weight:600">▲ CHAMPION MODEL</div>
