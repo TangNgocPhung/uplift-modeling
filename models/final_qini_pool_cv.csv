@@ -1,0 +1,7 @@
+Model,Qini_mean,Qini_std
+CausalForest,0.1502,0.0993
+S-Learner,0.1237,0.0754
+T-Learner,0.0949,0.0323
+UpliftRF,0.0709,0.0742
+X-Learner,0.0594,0.059
+DR-Learner,0.0499,0.0893
