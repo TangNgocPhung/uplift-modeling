@@ -12,7 +12,7 @@ st.set_page_config(
     page_title='UpliftIQ — Phân Tích Chiến Dịch Email',
     page_icon='▲',
     layout='wide',
-    initial_sidebar_state='collapsed',
+    initial_sidebar_state='expanded',
 )
 
 MODELS_DIR = os.path.join(os.path.dirname(__file__), 'models')
@@ -33,12 +33,20 @@ st.markdown("""
 [data-testid="stSidebar"] { background: #1A2A47 !important; border-right: 4px solid #B22234 !important; }
 [data-testid="stSidebar"] * { color: #F4EFE6 !important; }
 
-/* Ẩn Streamlit auto page navigation — CHỈ target container, KHÔNG target href (vì custom nav cũng dùng href) */
+/* Ẩn Streamlit auto page navigation — CHỈ target container của auto nav, KHÔNG đụng tới custom nav user content */
 [data-testid="stSidebarNav"], [data-testid="stSidebarNavItems"], [data-testid="stSidebarNavSeparator"], [data-testid="stSidebarNavLinkContainer"] { display: none !important; }
-section[data-testid="stSidebar"] ul { display: none !important; }
-section[data-testid="stSidebar"] [role="navigation"] { display: none !important; }
-section[data-testid="stSidebar"] > div > div:first-child > div:first-child > ul { display: none !important; }
-section[data-testid="stSidebar"] hr { display: none !important; }
+[data-testid="stSidebarNav"] ul, [data-testid="stSidebarNav"] hr { display: none !important; }
+
+/* Đảm bảo nút toggle sidebar (mở/đóng) luôn click được, không bị masthead che */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapseButton"],
+button[kind="header"] {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+[data-testid="stSidebarCollapsedControl"] svg,
+[data-testid="stSidebarCollapseButton"] svg { color: #1A2A47 !important; fill: #1A2A47 !important; }
+[data-testid="stHeader"] { background: transparent !important; z-index: 999998 !important; }
 
 .block-container { padding: 0 !important; max-width: 100% !important; }
 

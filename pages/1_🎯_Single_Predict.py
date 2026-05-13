@@ -43,10 +43,10 @@ section[data-testid="stSidebar"] ul { display: none !important; }
 section[data-testid="stSidebar"] [role="navigation"] { display: none !important; }
 section[data-testid="stSidebar"] hr { display: none !important; }
 
-.block-container { padding: 0 !important; max-width: 100% !important; }
+.block-container { padding: 0 80px !important; max-width: 100% !important; }
 
-/* Page header (mini-masthead) */
-.iq-ph { background: #1A2A47; color: #F4EFE6; padding: 18px 56px 22px; border-bottom: 4px solid #B22234; }
+/* Page header (mini-masthead) — dùng margin âm để breakout full width */
+.iq-ph { background: #1A2A47; color: #F4EFE6; padding: 22px 80px 22px; border-bottom: 4px solid #B22234; margin: 0 -80px 0 -80px; }
 .iq-ph-top { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #C7A270; letter-spacing: .15em; text-transform: uppercase; margin-bottom: 10px; }
 .iq-ph-back { color: #C7A270 !important; text-decoration: none !important; }
 .iq-ph-back:hover { color: #F4EFE6 !important; }
@@ -54,7 +54,7 @@ section[data-testid="stSidebar"] hr { display: none !important; }
 .iq-ph-title em { color: #B22234; font-style: normal; }
 .iq-ph-sub { font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 13px; color: #C7A270; margin-top: 6px; letter-spacing: .15em; text-transform: uppercase; }
 
-.iq-body { padding: 32px 56px; background: #F4EFE6; }
+.iq-body { padding: 36px 0 24px 0; background: #F4EFE6; }
 
 .iq-rub { font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 500; letter-spacing: .25em; text-transform: uppercase; color: #B22234; margin-bottom: 8px; padding-top: 8px; border-top: 2px solid #1A2A47; }
 
@@ -136,7 +136,7 @@ thresholds = load_classify_thresholds()
 
 if cf_model is None:
     st.markdown("""
-<div style="padding:32px 56px;background:#FBF8F2;border:2px solid #B22234;margin:32px 56px;font-family:'IBM Plex Sans Condensed',sans-serif">
+<div style="padding:32px 40px;background:#FBF8F2;border:2px solid #B22234;margin:32px 0;font-family:'IBM Plex Sans Condensed',sans-serif">
 <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#B22234;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px">⚠ Error</div>
 <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#1A2A47;margin-bottom:10px">Chưa có file mô hình</div>
 <div style="font-size:13px;color:#4A6378;line-height:1.7">Vui lòng copy file <code style="background:#1A2A47;color:#F4EFE6;padding:2px 6px;font-family:'IBM Plex Mono',monospace">cf_final.pkl</code> vào thư mục <code style="background:#1A2A47;color:#F4EFE6;padding:2px 6px;font-family:'IBM Plex Mono',monospace">./models/</code> rồi reload.</div>

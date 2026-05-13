@@ -27,7 +27,10 @@ def gauge_uplift(value, threshold, label='Uplift'):
     """
     Gauge chart hiển thị giá trị uplift so với threshold break-even.
     """
-    # Phân vùng: âm (đỏ) → vàng (chưa đủ) → xanh (vượt threshold)
+    # ROUND trước → plotly không thể hiện nhiều hơn 4 decimals
+    value = round(float(value), 4)
+    threshold = round(float(threshold), 4)
+
     max_val = max(abs(value), abs(threshold)) * 2.5
     max_val = max(max_val, 0.01)
 
@@ -35,19 +38,30 @@ def gauge_uplift(value, threshold, label='Uplift'):
         PAL['rust'] if value > 0 else PAL['red']
     )
 
+    # Tự format số để hiển thị (không phụ thuộc plotly valueformat)
+    sign = '+' if value >= 0 else ''
+    
     fig = go.Figure(go.Indicator(
         mode='gauge+number+delta',
         value=value,
-        number={'valueformat': '+.4f', 'font': {'size': 36, 'family': FONT_SERIF, 'color': PAL['ink']}},
-        delta={'reference': threshold, 'valueformat': '+.4f',
-                'font': {'size': 14, 'family': FONT_MONO},
-                'increasing': {'color': PAL['sage']},
-                'decreasing': {'color': PAL['red']}},
-        title={'text': label, 'font': {'size': 14, 'family': FONT_MONO, 'color': PAL['slate']}},
+        number={
+            'valueformat': '.4f',
+            'prefix': sign,
+            'font': {'size': 24, 'family': FONT_SERIF, 'color': PAL['ink']},
+        },
+        delta={
+            'reference': threshold,
+            'valueformat': '.4f',
+            'font': {'size': 11, 'family': FONT_MONO},
+            'increasing': {'color': PAL['sage']},
+            'decreasing': {'color': PAL['red']},
+        },
+        title={'text': label, 'font': {'size': 12, 'family': FONT_MONO, 'color': PAL['slate']}},
         gauge={
             'axis': {'range': [-max_val, max_val],
-                      'tickfont': {'size': 10, 'family': FONT_MONO, 'color': PAL['taupe']},
-                      'tickformat': '.3f'},
+                      'tickfont': {'size': 9, 'family': FONT_MONO, 'color': PAL['taupe']},
+                      'tickformat': '.3f',
+                      'nticks': 5},
             'bar': {'color': color, 'thickness': 0.7},
             'bgcolor': PAL['cream'],
             'borderwidth': 1,
@@ -67,8 +81,8 @@ def gauge_uplift(value, threshold, label='Uplift'):
     fig.update_layout(
         paper_bgcolor=PAL['cream'],
         plot_bgcolor=PAL['cream'],
-        height=260,
-        margin=dict(l=30, r=30, t=50, b=20),
+        height=310,
+        margin=dict(l=30, r=30, t=60, b=30),
         font_family=FONT_SANS,
     )
     return fig
