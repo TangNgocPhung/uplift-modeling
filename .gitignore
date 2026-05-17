@@ -1,0 +1,33 @@
+# Claude Code internal
+.claude/
+.cursor/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Streamlit cache
+.streamlit/secrets.toml
+
+# Data temp
+processed/
+*.tmp

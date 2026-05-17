@@ -9,26 +9,49 @@ import streamlit as st
 
 
 # ════════════════════════════════════════════════════════════════
-# NumPy BitGenerator compatibility shim
+# NumPy BitGenerator compatibility shim (v2 — patch function trực tiếp)
 # ────────────────────────────────────────────────────────────────
-# Lỗi: pkl pickled bằng numpy cũ → unpickle bằng numpy 2.x báo
+# Lỗi: pkl pickled bằng numpy 2.x → unpickle bằng numpy 1.26.4 báo
 #   "<class 'numpy.random._mt19937.MT19937'> is not a known BitGenerator module"
-# Vì numpy registry `BitGenerators` dict chỉ có key = short name 'MT19937'.
-# Fix: inject class-repr keys vào dict để lookup không fail.
+# Nguyên nhân: numpy 2.x lưu class OBJECT trong pickle, numpy 1.x đợi STRING.
+# Fix: patch `__bit_generator_ctor` để xử lý cả 2 format.
 # ════════════════════════════════════════════════════════════════
 try:
     import numpy.random._pickle as _np_pickle
-    from numpy.random import MT19937, PCG64, Philox, SFC64
-    _compat_keys = {
-        "<class 'numpy.random._mt19937.MT19937'>": MT19937,
-        "<class 'numpy.random._pcg64.PCG64'>":     PCG64,
-        "<class 'numpy.random._philox.Philox'>":   Philox,
-        "<class 'numpy.random._sfc64.SFC64'>":     SFC64,
-    }
+
+    if not getattr(_np_pickle, '_compat_shim_v2', False):
+        # Tìm tên function (đổi giữa các phiên bản numpy)
+        _orig_func = None
+        _orig_attr = None
+        for _name in ('__bit_generator_ctor', '_bit_generator_ctor'):
+            if hasattr(_np_pickle, _name):
+                _orig_func = getattr(_np_pickle, _name)
+                _orig_attr = _name
+                break
+
+        if _orig_func is not None:
+            def _patched_ctor(bit_generator_name='MT19937'):
+                # Case 1: pkl numpy 2.x lưu CLASS OBJECT trực tiếp
+                if isinstance(bit_generator_name, type):
+                    return bit_generator_name()
+                # Case 2: chuỗi "<class 'numpy.random._mt19937.MT19937'>"
+                if isinstance(bit_generator_name, str) and bit_generator_name.startswith('<class'):
+                    short = bit_generator_name.rsplit('.', 1)[-1].rstrip("'>")
+                    return _orig_func(short)
+                # Case 3: short name bình thường — delegate cho original
+                return _orig_func(bit_generator_name)
+
+            setattr(_np_pickle, _orig_attr, _patched_ctor)
+            _np_pickle._compat_shim_v2 = True
+
+    # Bổ sung: cũng inject vào BitGenerators dict cho double-safety
     if hasattr(_np_pickle, 'BitGenerators'):
-        for _k, _v in _compat_keys.items():
-            _np_pickle.BitGenerators.setdefault(_k, _v)
-except (ImportError, AttributeError):
+        from numpy.random import MT19937, PCG64, Philox, SFC64
+        _np_pickle.BitGenerators.setdefault("<class 'numpy.random._mt19937.MT19937'>", MT19937)
+        _np_pickle.BitGenerators.setdefault("<class 'numpy.random._pcg64.PCG64'>", PCG64)
+        _np_pickle.BitGenerators.setdefault("<class 'numpy.random._philox.Philox'>", Philox)
+        _np_pickle.BitGenerators.setdefault("<class 'numpy.random._sfc64.SFC64'>", SFC64)
+except Exception:
     pass
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
