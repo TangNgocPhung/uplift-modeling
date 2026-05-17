@@ -363,16 +363,29 @@ st.markdown(body_html, unsafe_allow_html=True)
 
 # ── SIDEBAR ──
 with st.sidebar:
+    # Logo + Navigation label
     st.markdown("""
 <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#F4EFE6;letter-spacing:-0.5px;padding:8px 0 2px">Uplift<span style="color:#B22234">IQ</span></div>
-<div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;text-transform:uppercase;letter-spacing:.2em;margin-bottom:16px;border-bottom:1px solid #2C3E5C;padding-bottom:10px">Navigation</div>
-<div style="line-height:1.4;">
-<a class="iq-nav-link" href="/Single_Predict" target="_self">01 · SINGLE PREDICT</a>
-<a class="iq-nav-link" href="/Batch_Upload" target="_self">02 · BATCH UPLOAD</a>
-<a class="iq-nav-link" href="/Economic_Simulator" target="_self">03 · ECONOMIC SIM</a>
-<a class="iq-nav-link" href="/Persona_Explorer" target="_self">04 · PERSONA EXPLORER</a>
-<a class="iq-nav-link" href="/Gioi_Thieu_Do_An" target="_self">05 · GIỚI THIỆU ĐỒ ÁN</a>
-</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;text-transform:uppercase;letter-spacing:.2em;margin-bottom:14px;border-bottom:1px solid #2C3E5C;padding-bottom:10px">Navigation</div>
+""", unsafe_allow_html=True)
+
+    # Navigation links — dùng st.page_link để Streamlit handle URL đúng
+    nav_pages = [
+        ('app.py', '00 · TRANG CHỦ', True),  # trang hiện tại
+        ('pages/1_🎯_Single_Predict.py', '01 · SINGLE PREDICT', False),
+        ('pages/2_📊_Batch_Upload.py', '02 · BATCH UPLOAD', False),
+        ('pages/3_💰_Economic_Simulator.py', '03 · ECONOMIC SIM', False),
+        ('pages/4_👥_Persona_Explorer.py', '04 · PERSONA EXPLORER', False),
+        ('pages/5_📖_Gioi_Thieu_Do_An.py', '05 · GIỚI THIỆU ĐỒ ÁN', False),
+    ]
+    for page_path, label, is_active in nav_pages:
+        cls = 'iq-nav-active' if is_active else 'iq-nav-item'
+        st.markdown(f'<div class="{cls}">', unsafe_allow_html=True)
+        st.page_link(page_path, label=label)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Champion + meta info
+    st.markdown("""
 <div style="border-top:1px solid #2C3E5C;margin-top:18px;padding-top:14px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;line-height:2">
 <div style="color:#B22234;font-weight:600">▲ CHAMPION MODEL</div>
 <div style="color:#F4EFE6">CausalForest DML</div>
@@ -382,10 +395,11 @@ with st.sidebar:
 <div style="border-top:1px solid #2C3E5C;margin-top:18px;padding-top:14px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;line-height:2">
 <div>GVHD: TS. Huỳnh Lê Tấn Tài</div>
 <div>ĐHSP TP.HCM · 2026</div>
+</div>
 <div style="border-top:1px solid #2C3E5C;margin-top:18px;padding-top:14px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;line-height:2">
 <div>Thành viên thực hiện</div>
-<div>Tăng Ngọc Phụng - KHMT836027 </div>
-<div>Hoàng Châu Ngọc Phương - KHMT836028 </div>
-<div>Lê Thị Mai Len - KHMT836015 </div>
+<div>Tăng Ngọc Phụng - KHMT836027</div>
+<div>Hoàng Châu Ngọc Phương - KHMT836028</div>
+<div>Lê Thị Mai Len - KHMT836015</div>
 </div>
 """, unsafe_allow_html=True)

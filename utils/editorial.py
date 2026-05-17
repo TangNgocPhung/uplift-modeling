@@ -44,12 +44,70 @@ CSS_BASE = """
 button[kind="header"] { z-index: 999999 !important; pointer-events: auto !important; }
 [data-testid="stSidebarCollapsedControl"] svg { color: #1A2A47 !important; fill: #1A2A47 !important; }
 
+/* ── Nav links: st.page_link styled editorial ── */
 .iq-nav-link { display:block; text-decoration:none !important; border-left:2px solid transparent;
     padding:4px 0 4px 10px; margin-bottom:4px;
     color:#C7A270 !important; font-family:'IBM Plex Sans Condensed',sans-serif;
     font-size:11px; transition: all .15s ease; }
 .iq-nav-link:hover { border-left-color:#B22234; color:#F4EFE6 !important; background:rgba(178,34,52,0.08); }
 .iq-nav-link.active { border-left-color:#B22234; color:#F4EFE6 !important; font-weight:700; }
+
+/* Style cho st.page_link wrapper trong sidebar — nav editorial */
+[data-testid="stSidebar"] .iq-nav-item,
+[data-testid="stSidebar"] .iq-nav-active {
+    border-left: 2px solid transparent;
+    margin-bottom: 2px;
+    transition: all .15s ease;
+}
+[data-testid="stSidebar"] .iq-nav-active { border-left-color: #B22234 !important; }
+[data-testid="stSidebar"] .iq-nav-item:hover { border-left-color: #B22234 !important;
+    background: rgba(178,34,52,0.08); }
+
+/* Override st.page_link styling trong sidebar */
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"],
+[data-testid="stSidebar"] [data-testid="stPageLink"] a {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 4px 0 4px 10px !important;
+    margin: 0 !important;
+    font-family: 'IBM Plex Sans Condensed', sans-serif !important;
+    font-size: 11px !important;
+    color: #C7A270 !important;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    transition: color .15s ease;
+}
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] span,
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] p,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a span,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a p {
+    color: #C7A270 !important;
+    font-family: 'IBM Plex Sans Condensed', sans-serif !important;
+    font-size: 11px !important;
+}
+[data-testid="stSidebar"] .iq-nav-active a[data-testid="stPageLink-NavLink"],
+[data-testid="stSidebar"] .iq-nav-active a[data-testid="stPageLink-NavLink"] span,
+[data-testid="stSidebar"] .iq-nav-active a[data-testid="stPageLink-NavLink"] p,
+[data-testid="stSidebar"] .iq-nav-active [data-testid="stPageLink"] a,
+[data-testid="stSidebar"] .iq-nav-active [data-testid="stPageLink"] a span,
+[data-testid="stSidebar"] .iq-nav-active [data-testid="stPageLink"] a p {
+    color: #F4EFE6 !important;
+    font-weight: 700 !important;
+}
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover,
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover span,
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover p,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover span,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover p {
+    color: #F4EFE6 !important;
+}
+/* Ẩn icon mặc định của st.page_link (chỉ giữ label đã set) */
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] [data-testid="stIconMaterial"],
+[data-testid="stSidebar"] [data-testid="stPageLink"] svg {
+    display: none !important;
+}
 
 /* ── Block container ── */
 .block-container { padding: 0 80px !important; max-width: 100% !important; }
@@ -227,13 +285,15 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 
 
 # Năm trang phụ. Index 0 = trang chủ.
+# Dùng đường dẫn file thực (st.page_link API) thay vì URL slug để Streamlit
+# tự handle URL routing — emoji + dấu gạch dưới trong filename không bị lỗi.
 NAV_ITEMS = [
-    ('/', '00 · TRANG CHỦ'),
-    ('/Single_Predict', '01 · SINGLE PREDICT'),
-    ('/Batch_Upload', '02 · BATCH UPLOAD'),
-    ('/Economic_Simulator', '03 · ECONOMIC SIM'),
-    ('/Persona_Explorer', '04 · PERSONA EXPLORER'),
-    ('/Gioi_Thieu_Do_An', '05 · GIỚI THIỆU ĐỒ ÁN'),
+    ('app.py', '00 · TRANG CHỦ'),
+    ('pages/1_🎯_Single_Predict.py', '01 · SINGLE PREDICT'),
+    ('pages/2_📊_Batch_Upload.py', '02 · BATCH UPLOAD'),
+    ('pages/3_💰_Economic_Simulator.py', '03 · ECONOMIC SIM'),
+    ('pages/4_👥_Persona_Explorer.py', '04 · PERSONA EXPLORER'),
+    ('pages/5_📖_Gioi_Thieu_Do_An.py', '05 · GIỚI THIỆU ĐỒ ÁN'),
 ]
 
 NAV_TOTAL = 5  # tổng số trang phụ (không tính trang chủ)
@@ -265,17 +325,26 @@ def render_masthead(page_num: int, page_label: str,
 
 
 def render_sidebar_header(active_idx: int) -> None:
-    """Logo + navigation cho sidebar. `active_idx` 0–4 (0 = trang chủ)."""
-    links_html = ''
-    for i, (href, label) in enumerate(NAV_ITEMS):
-        cls = 'iq-nav-link active' if i == active_idx else 'iq-nav-link'
-        links_html += f'<a class="{cls}" href="{href}" target="_self">{label}</a>'
+    """Logo + navigation cho sidebar. `active_idx` 0–5 (0 = trang chủ).
 
-    st.markdown(f"""
+    Dùng st.page_link() — API chuẩn của Streamlit để chuyển trang an toàn,
+    tránh lỗi 404 do emoji/underscore trong filename URL.
+    """
+    # Logo + label
+    st.markdown("""
 <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#F4EFE6;letter-spacing:-0.5px;padding:8px 0 2px">Uplift<span style="color:#B22234">IQ</span></div>
 <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;text-transform:uppercase;letter-spacing:.2em;margin-bottom:14px;border-bottom:1px solid #2C3E5C;padding-bottom:10px">Navigation</div>
-<div style="line-height:1.4;margin-bottom:18px">{links_html}</div>
 """, unsafe_allow_html=True)
+
+    # Đánh dấu active link bằng class qua wrapper div
+    for i, (page_path, label) in enumerate(NAV_ITEMS):
+        wrapper_class = 'iq-nav-active' if i == active_idx else 'iq-nav-item'
+        st.markdown(f'<div class="{wrapper_class}">', unsafe_allow_html=True)
+        st.page_link(page_path, label=label)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div style="height:14px;border-bottom:1px solid #2C3E5C;margin-bottom:10px"></div>',
+                unsafe_allow_html=True)
 
 
 def render_break_even(threshold: float, note: str = 'Chỉ gửi email nếu uplift dự đoán > ngưỡng này') -> None:
