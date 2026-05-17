@@ -48,6 +48,68 @@ button[kind="header"] {
 [data-testid="stSidebarCollapseButton"] svg { color: #1A2A47 !important; fill: #1A2A47 !important; }
 [data-testid="stHeader"] { background: transparent !important; z-index: 999998 !important; }
 
+/* ═══ Sidebar nav: compress khoảng cách + active state editorial ═══ */
+[data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"]) {
+    margin: 0 !important; padding: 0 !important; min-height: 0 !important;
+}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"]:has([data-testid="stPageLink"]) {
+    gap: 0 !important;
+}
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"],
+[data-testid="stSidebar"] [data-testid="stPageLink"] a {
+    background: transparent !important;
+    border: none !important;
+    border-left: 2px solid transparent !important;
+    border-radius: 0 !important;
+    padding: 5px 0 5px 12px !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+    line-height: 1.3 !important;
+    font-family: 'IBM Plex Sans Condensed', sans-serif !important;
+    font-size: 11px !important;
+    color: #C7A270 !important;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    transition: all .15s ease;
+    display: flex !important;
+    align-items: center !important;
+}
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] *,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a * {
+    color: inherit !important;
+    font-family: 'IBM Plex Sans Condensed', sans-serif !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+    margin: 0 !important; padding: 0 !important;
+    background: transparent !important;
+}
+[data-testid="stSidebar"] a[aria-current="page"],
+[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {
+    border-left-color: #B22234 !important;
+    color: #F4EFE6 !important;
+    font-weight: 700 !important;
+    background: rgba(178,34,52,0.05) !important;
+}
+[data-testid="stSidebar"] a[aria-current="page"] *,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] * {
+    color: #F4EFE6 !important; font-weight: 700 !important;
+}
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
+    border-left-color: #B22234 !important;
+    background: rgba(178,34,52,0.08) !important;
+    color: #F4EFE6 !important;
+}
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover *,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover * {
+    color: #F4EFE6 !important;
+}
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] [data-testid="stIconMaterial"],
+[data-testid="stSidebar"] [data-testid="stPageLink"] svg,
+[data-testid="stSidebar"] [data-testid="stPageLink"] [data-testid*="Icon"] {
+    display: none !important;
+}
+
 .block-container { padding: 0 !important; max-width: 100% !important; }
 
 /* ═══ MASTHEAD ═══ */
