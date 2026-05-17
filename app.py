@@ -369,20 +369,17 @@ with st.sidebar:
 <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;text-transform:uppercase;letter-spacing:.2em;margin-bottom:14px;border-bottom:1px solid #2C3E5C;padding-bottom:10px">Navigation</div>
 """, unsafe_allow_html=True)
 
-    # Navigation links — dùng st.page_link để Streamlit handle URL đúng
+    # Navigation links — Streamlit tự thêm aria-current="page" cho trang hiện tại
     nav_pages = [
-        ('app.py', '00 · TRANG CHỦ', True),  # trang hiện tại
-        ('pages/1_🎯_Single_Predict.py', '01 · SINGLE PREDICT', False),
-        ('pages/2_📊_Batch_Upload.py', '02 · BATCH UPLOAD', False),
-        ('pages/3_💰_Economic_Simulator.py', '03 · ECONOMIC SIM', False),
-        ('pages/4_👥_Persona_Explorer.py', '04 · PERSONA EXPLORER', False),
-        ('pages/5_📖_Gioi_Thieu_Do_An.py', '05 · GIỚI THIỆU ĐỒ ÁN', False),
+        ('app.py', '00 · TRANG CHỦ'),
+        ('pages/1_🎯_Single_Predict.py', '01 · SINGLE PREDICT'),
+        ('pages/2_📊_Batch_Upload.py', '02 · BATCH UPLOAD'),
+        ('pages/3_💰_Economic_Simulator.py', '03 · ECONOMIC SIM'),
+        ('pages/4_👥_Persona_Explorer.py', '04 · PERSONA EXPLORER'),
+        ('pages/5_📖_Gioi_Thieu_Do_An.py', '05 · GIỚI THIỆU ĐỒ ÁN'),
     ]
-    for page_path, label, is_active in nav_pages:
-        cls = 'iq-nav-active' if is_active else 'iq-nav-item'
-        st.markdown(f'<div class="{cls}">', unsafe_allow_html=True)
+    for page_path, label in nav_pages:
         st.page_link(page_path, label=label)
-        st.markdown('</div>', unsafe_allow_html=True)
 
     # Champion + meta info
     st.markdown("""

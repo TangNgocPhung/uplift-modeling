@@ -52,60 +52,85 @@ button[kind="header"] { z-index: 999999 !important; pointer-events: auto !import
 .iq-nav-link:hover { border-left-color:#B22234; color:#F4EFE6 !important; background:rgba(178,34,52,0.08); }
 .iq-nav-link.active { border-left-color:#B22234; color:#F4EFE6 !important; font-weight:700; }
 
-/* Style cho st.page_link wrapper trong sidebar — nav editorial */
-[data-testid="stSidebar"] .iq-nav-item,
-[data-testid="stSidebar"] .iq-nav-active {
-    border-left: 2px solid transparent;
-    margin-bottom: 2px;
-    transition: all .15s ease;
-}
-[data-testid="stSidebar"] .iq-nav-active { border-left-color: #B22234 !important; }
-[data-testid="stSidebar"] .iq-nav-item:hover { border-left-color: #B22234 !important;
-    background: rgba(178,34,52,0.08); }
+/* ═══════════════════════════════════════════════════════════════
+   Sidebar nav: compress khoảng cách st.page_link
+   ═══════════════════════════════════════════════════════════════ */
 
-/* Override st.page_link styling trong sidebar */
+/* (1) Triệt tiêu margin-bottom + gap của container Streamlit chứa stPageLink */
+[data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"]) {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+}
+
+/* (2) Triệt tiêu gap giữa các stElementContainer chứa nav (target FlexContainer) */
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"]:has([data-testid="stPageLink"]) {
+    gap: 0 !important;
+}
+
+/* (3) st.page_link bản thân — nén padding, font editorial */
 [data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"],
 [data-testid="stSidebar"] [data-testid="stPageLink"] a {
     background: transparent !important;
     border: none !important;
+    border-left: 2px solid transparent !important;
     border-radius: 0 !important;
-    padding: 4px 0 4px 10px !important;
+    padding: 5px 0 5px 12px !important;
     margin: 0 !important;
+    min-height: 0 !important;
+    line-height: 1.3 !important;
     font-family: 'IBM Plex Sans Condensed', sans-serif !important;
     font-size: 11px !important;
     color: #C7A270 !important;
     text-transform: uppercase;
     letter-spacing: .05em;
-    transition: color .15s ease;
+    transition: all .15s ease;
+    display: flex !important;
+    align-items: center !important;
 }
-[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] span,
-[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] p,
-[data-testid="stSidebar"] [data-testid="stPageLink"] a span,
-[data-testid="stSidebar"] [data-testid="stPageLink"] a p {
-    color: #C7A270 !important;
+
+/* (4) Override các span/p/div con bên trong page_link */
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] *,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a * {
+    color: inherit !important;
     font-family: 'IBM Plex Sans Condensed', sans-serif !important;
     font-size: 11px !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
 }
-[data-testid="stSidebar"] .iq-nav-active a[data-testid="stPageLink-NavLink"],
-[data-testid="stSidebar"] .iq-nav-active a[data-testid="stPageLink-NavLink"] span,
-[data-testid="stSidebar"] .iq-nav-active a[data-testid="stPageLink-NavLink"] p,
-[data-testid="stSidebar"] .iq-nav-active [data-testid="stPageLink"] a,
-[data-testid="stSidebar"] .iq-nav-active [data-testid="stPageLink"] a span,
-[data-testid="stSidebar"] .iq-nav-active [data-testid="stPageLink"] a p {
+
+/* (5) ACTIVE state — Streamlit tự thêm aria-current="page" cho trang hiện tại */
+[data-testid="stSidebar"] a[aria-current="page"],
+[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {
+    border-left-color: #B22234 !important;
+    color: #F4EFE6 !important;
+    font-weight: 700 !important;
+    background: rgba(178,34,52,0.05) !important;
+}
+[data-testid="stSidebar"] a[aria-current="page"] *,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] * {
     color: #F4EFE6 !important;
     font-weight: 700 !important;
 }
+
+/* (6) HOVER state */
 [data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover,
-[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover span,
-[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover p,
-[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover,
-[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover span,
-[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover p {
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
+    border-left-color: #B22234 !important;
+    background: rgba(178,34,52,0.08) !important;
     color: #F4EFE6 !important;
 }
-/* Ẩn icon mặc định của st.page_link (chỉ giữ label đã set) */
+[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover *,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover * {
+    color: #F4EFE6 !important;
+}
+
+/* (7) Ẩn icon mặc định của st.page_link (chỉ giữ text label) */
 [data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] [data-testid="stIconMaterial"],
-[data-testid="stSidebar"] [data-testid="stPageLink"] svg {
+[data-testid="stSidebar"] [data-testid="stPageLink"] svg,
+[data-testid="stSidebar"] [data-testid="stPageLink"] [data-testid*="Icon"] {
     display: none !important;
 }
 
@@ -324,26 +349,25 @@ def render_masthead(page_num: int, page_label: str,
 """, unsafe_allow_html=True)
 
 
-def render_sidebar_header(active_idx: int) -> None:
-    """Logo + navigation cho sidebar. `active_idx` 0–5 (0 = trang chủ).
+def render_sidebar_header(active_idx: int = 0) -> None:
+    """Logo + navigation cho sidebar.
 
-    Dùng st.page_link() — API chuẩn của Streamlit để chuyển trang an toàn,
-    tránh lỗi 404 do emoji/underscore trong filename URL.
+    Dùng st.page_link() — Streamlit tự thêm aria-current="page" cho trang hiện tại,
+    CSS tự detect active state mà không cần wrapper class.
+    Tham số `active_idx` giữ lại cho backward compat nhưng không dùng nữa.
     """
-    # Logo + label
+    # Logo + Navigation label
     st.markdown("""
 <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#F4EFE6;letter-spacing:-0.5px;padding:8px 0 2px">Uplift<span style="color:#B22234">IQ</span></div>
-<div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;text-transform:uppercase;letter-spacing:.2em;margin-bottom:14px;border-bottom:1px solid #2C3E5C;padding-bottom:10px">Navigation</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px;border-bottom:1px solid #2C3E5C;padding-bottom:8px">Navigation</div>
 """, unsafe_allow_html=True)
 
-    # Đánh dấu active link bằng class qua wrapper div
-    for i, (page_path, label) in enumerate(NAV_ITEMS):
-        wrapper_class = 'iq-nav-active' if i == active_idx else 'iq-nav-item'
-        st.markdown(f'<div class="{wrapper_class}">', unsafe_allow_html=True)
+    # Render page links — Streamlit tự xử lý active state
+    for page_path, label in NAV_ITEMS:
         st.page_link(page_path, label=label)
-        st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div style="height:14px;border-bottom:1px solid #2C3E5C;margin-bottom:10px"></div>',
+    # Divider dưới nav
+    st.markdown('<div style="border-bottom:1px solid #2C3E5C;margin:10px 0 12px"></div>',
                 unsafe_allow_html=True)
 
 
