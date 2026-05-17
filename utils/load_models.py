@@ -7,6 +7,30 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+
+# ════════════════════════════════════════════════════════════════
+# NumPy BitGenerator compatibility shim
+# ────────────────────────────────────────────────────────────────
+# Lỗi: pkl pickled bằng numpy cũ → unpickle bằng numpy 2.x báo
+#   "<class 'numpy.random._mt19937.MT19937'> is not a known BitGenerator module"
+# Vì numpy registry `BitGenerators` dict chỉ có key = short name 'MT19937'.
+# Fix: inject class-repr keys vào dict để lookup không fail.
+# ════════════════════════════════════════════════════════════════
+try:
+    import numpy.random._pickle as _np_pickle
+    from numpy.random import MT19937, PCG64, Philox, SFC64
+    _compat_keys = {
+        "<class 'numpy.random._mt19937.MT19937'>": MT19937,
+        "<class 'numpy.random._pcg64.PCG64'>":     PCG64,
+        "<class 'numpy.random._philox.Philox'>":   Philox,
+        "<class 'numpy.random._sfc64.SFC64'>":     SFC64,
+    }
+    if hasattr(_np_pickle, 'BitGenerators'):
+        for _k, _v in _compat_keys.items():
+            _np_pickle.BitGenerators.setdefault(_k, _v)
+except (ImportError, AttributeError):
+    pass
+
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS_DIR = os.path.join(HERE, 'models')
 
