@@ -14,6 +14,9 @@ from utils.policy import (optimal_action, expected_profit_per_user,
                            QUADRANT_COLORS, QUADRANT_RECOMMENDATION,
                            quadrant_label)
 from utils.plots import gauge_uplift
+from utils.editorial import (render_masthead, render_sidebar_header,
+                              render_break_even, sidebar_section_title,
+                              inject_css)
 
 st.set_page_config(
     page_title='Single Predict — UpliftIQ',
