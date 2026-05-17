@@ -289,7 +289,7 @@ today = date.today().strftime('%d.%m.%Y')
 st.markdown(f"""
 <div class="iq-mast">
 <div class="iq-mt">
-<span>KhAI THÁC DỮ LIỆU VÀ ỨNG DỤNG · ĐHSP TP.HCM · 2025</span>
+<span>KhAI THÁC DỮ LIỆU VÀ ỨNG DỤNG · ĐHSP TP.HCM · 2026</span>
 <span>CAUSAL INFERENCE &amp; UPLIFT MODELING</span>
 </div>
 <div class="iq-mc">
@@ -413,7 +413,7 @@ body_html = f"""
 </div>
 
 <div class="iq-cf">
-<span>© 2025 UPLIFTIQ - Khai thác dữ liệu và ứng dụng </span>
+<span>©2026 UPLIFTIQ - Khai thác dữ liệu và ứng dụng </span>
 <span>KÜNZEL 2019 · ATHEY &amp; WAGER 2019 · HILLSTROM 2008</span>
 <span>STREAMLIT · CAUSALML · ECONML · LIGHTGBM</span>
 </div>
