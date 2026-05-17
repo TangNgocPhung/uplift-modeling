@@ -157,38 +157,27 @@ if cf_model is None:
 
 
 # ═════════════════════════════════════════════════════════════
-# PAGE HEADER
+# Inject CSS từ editorial.py để page_link nav styling áp dụng đúng
+# (gọi sau inline CSS để override nav-specific rules)
 # ═════════════════════════════════════════════════════════════
-st.markdown("""
-<div class="iq-ph">
-<div class="iq-ph-top">
-<a class="iq-ph-back" href="/" target="_self">← UpliftIQ Home</a>
-<span>TRANG 01 / 04</span>
-<span>SINGLE PREDICT</span>
-</div>
-<div class="iq-ph-title">Dự đoán cho <em>một khách hàng</em></div>
-<div class="iq-ph-sub">Nhập thông tin → CausalForest dự đoán CATE → Khuyến nghị tối ưu</div>
-</div>
-""", unsafe_allow_html=True)
+inject_css()
 
 
 # ═════════════════════════════════════════════════════════════
-# SIDEBAR
+# PAGE HEADER — dùng helper render_masthead (tự động "TRANG 01 / 05")
+# ═════════════════════════════════════════════════════════════
+render_masthead(1, 'SINGLE PREDICT',
+                'Dự đoán cho', 'một khách hàng',
+                'Nhập thông tin → CausalForest dự đoán CATE → Khuyến nghị tối ưu')
+
+
+# ═════════════════════════════════════════════════════════════
+# SIDEBAR — dùng helper, đồng bộ 6 trang
 # ═════════════════════════════════════════════════════════════
 with st.sidebar:
-    st.markdown("""
-<div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#F4EFE6;letter-spacing:-0.5px;padding:8px 0 2px">Uplift<span style="color:#B22234">IQ</span></div>
-<div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;text-transform:uppercase;letter-spacing:.2em;margin-bottom:14px;border-bottom:1px solid #2C3E5C;padding-bottom:10px">Navigation</div>
-<div style="line-height:1.4;margin-bottom:18px">
-<a class="iq-nav-link" href="/" target="_self" style="display:block;text-decoration:none;border-left:2px solid transparent;padding:4px 0 4px 10px;margin-bottom:4px;color:#C7A270;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px">00 · TRANG CHỦ</a>
-<a class="iq-nav-link" href="/Single_Predict" target="_self" style="display:block;text-decoration:none;border-left:2px solid #B22234;padding:4px 0 4px 10px;margin-bottom:4px;color:#F4EFE6;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px;font-weight:700">01 · SINGLE PREDICT</a>
-<a class="iq-nav-link" href="/Batch_Upload" target="_self" style="display:block;text-decoration:none;border-left:2px solid transparent;padding:4px 0 4px 10px;margin-bottom:4px;color:#C7A270;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px">02 · BATCH UPLOAD</a>
-<a class="iq-nav-link" href="/Economic_Simulator" target="_self" style="display:block;text-decoration:none;border-left:2px solid transparent;padding:4px 0 4px 10px;margin-bottom:4px;color:#C7A270;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px">03 · ECONOMIC SIM</a>
-<a class="iq-nav-link" href="/Persona_Explorer" target="_self" style="display:block;text-decoration:none;border-left:2px solid transparent;padding:4px 0 4px 10px;color:#C7A270;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:11px">04 · PERSONA EXPLORER</a>
-</div>
-<div style="border-top:1px solid #2C3E5C;padding-top:14px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">⚙ Tham số kinh tế</div>
-""", unsafe_allow_html=True)
+    render_sidebar_header(active_idx=1)
 
+    sidebar_section_title('⚙ Tham số kinh tế')
     profit_per_conv = st.number_input(
         'Lợi nhuận / conversion (VND)', value=DEFAULT_PROFIT,
         min_value=10_000, max_value=1_000_000, step=10_000)
@@ -197,14 +186,7 @@ with st.sidebar:
         min_value=500, max_value=50_000, step=500)
 
     threshold = cost_per_email / profit_per_conv
-
-    st.markdown(f"""
-<div style="margin-top:10px;padding:10px 14px;background:#2C3E5C;border-left:3px solid #B22234">
-<div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#C7A270;letter-spacing:.15em;text-transform:uppercase">Break-even τ</div>
-<div style="font-family:'IBM Plex Mono',monospace;font-size:18px;color:#F4EFE6;margin-top:2px">{threshold:.4f}</div>
-<div style="font-family:'IBM Plex Sans Condensed',sans-serif;font-size:10px;color:#C7A270;margin-top:4px;line-height:1.4">Chỉ gửi email nếu uplift dự đoán {'>'} ngưỡng này</div>
-</div>
-""", unsafe_allow_html=True)
+    render_break_even(threshold)
 
 
 # ═════════════════════════════════════════════════════════════
