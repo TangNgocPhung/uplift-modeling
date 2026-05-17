@@ -227,7 +227,7 @@ today = date.today().strftime('%d.%m.%Y')
 st.markdown(f"""
 <div class="iq-mast">
 <div class="iq-mt">
-<span>LUẬN VĂN THẠC SĨ · ĐHSP TP.HCM · 2025</span>
+<span>KhAI THÁC DỮ LIỆU VÀ ỨNG DỤNG · ĐHSP TP.HCM · 2025</span>
 <span>CAUSAL INFERENCE &amp; UPLIFT MODELING</span>
 <span>CẬP NHẬT {today}</span>
 </div>
