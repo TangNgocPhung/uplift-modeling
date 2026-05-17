@@ -229,7 +229,6 @@ st.markdown(f"""
 <div class="iq-mt">
 <span>KhAI THÁC DỮ LIỆU VÀ ỨNG DỤNG · ĐHSP TP.HCM · 2025</span>
 <span>CAUSAL INFERENCE &amp; UPLIFT MODELING</span>
-<span>CẬP NHẬT {today}</span>
 </div>
 <div class="iq-mc">
 <div class="iq-mn">Uplift<em>IQ</em></div>
